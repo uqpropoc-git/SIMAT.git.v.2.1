@@ -1,7 +1,7 @@
 {
-  "name": "Sistem Input Muka Air Tanah",
+  "name": "Sistem Input Muka Air Tanah PT Multisarana Avindo",
   "short_name": "Input MAT",
-  "description": "Aplikasi Pencatatan dan Monitoring Muka Air Tanah Offline-First",
+  "description": "Aplikasi Pencatatan dan Monitoring Muka Air Tanah Offline-First PT Multisarana Avindo",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f1f5f9",
