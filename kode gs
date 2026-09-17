@@ -1,16 +1,17 @@
 /**
- * BACKEND API - GMAIL / SPREADSHEET ENGINE
+ * BACKEND API - GOOGLE APPS SCRIPT
  */
 
 function doGet(e) {
-  const action = e.parameter.action;
+  const action = e ? e.parameter.action : '';
   
   if (action === 'getHistory') {
     return handleGetHistory();
+  } else if (action === 'getOptions') {
+    return handleGetOptions();
   }
   
-  return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Action tidak valid' }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return respondJSON({ status: 'error', message: 'Action tidak valid' });
 }
 
 function doPost(e) {
@@ -28,7 +29,41 @@ function doPost(e) {
   }
 }
 
-// Handler untuk Sinkronisasi Data dari Client
+// Handler Opsi Dropdown (Sumur & Lokasi)
+function handleGetOptions() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheetMaster = ss.getSheetByName('Master_Sumur');
+    
+    // Default fallback jika sheet master belum dibuat
+    let sumurList = ["SP-01", "SP-02", "SP-03", "SP-04", "SP-05", "MB-01", "MB-02"];
+    let lokasiList = ["Pit Bakungan", "Pit West", "Pit East", "Disposal Area", "POS Simpang KTA", "Stockpile"];
+
+    if (sheetMaster) {
+      const data = sheetMaster.getDataRange().getValues();
+      if (data.length > 1) {
+        sumurList = [];
+        lokasiList = [];
+        for (let i = 1; i < data.length; i++) {
+          if (data[i][0]) sumurList.push(data[i][0].toString());
+          if (data[i][1]) lokasiList.push(data[i][1].toString());
+        }
+        sumurList = [...new Set(sumurList)];
+        lokasiList = [...new Set(lokasiList)];
+      }
+    }
+
+    return respondJSON({
+      status: 'success',
+      sumur: sumurList,
+      lokasi: lokasiList
+    });
+  } catch (e) {
+    return respondJSON({ status: 'error', message: e.toString() });
+  }
+}
+
+// Handler Sinkronisasi Data dari Client
 function handleSyncData(dataArray) {
   if (!dataArray || !Array.isArray(dataArray) || dataArray.length === 0) {
     return respondJSON({ status: 'error', message: 'Data kosong atau format salah.' });
@@ -60,12 +95,13 @@ function handleSyncData(dataArray) {
       const subFolder = rootFolder.createFolder(folderName);
       folderUrl = subFolder.getUrl();
 
-      data.fotos.forEach((fotoBase64, index) => {
-        if (fotoBase64 && fotoBase64.includes(',')) {
-          const splitData = fotoBase64.split(',');
+      data.fotos.forEach((fileBase64, index) => {
+        if (fileBase64 && fileBase64.includes(',')) {
+          const splitData = fileBase64.split(',');
           const contentType = splitData[0].match(/:(.*?);/)[1];
           const bytes = Utilities.base64Decode(splitData[1]);
-          const blob = Utilities.newBlob(bytes, contentType, `Foto_${index + 1}.jpg`);
+          const ext = contentType.includes('video') ? 'mp4' : 'jpg';
+          const blob = Utilities.newBlob(bytes, contentType, `Dokumentasi_${index + 1}.${ext}`);
           subFolder.createFile(blob);
         }
       });
@@ -105,7 +141,7 @@ function handleSyncData(dataArray) {
   });
 }
 
-// Handler untuk Mengambil Riwayat Data
+// Handler Mengambil Riwayat
 function handleGetHistory() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
