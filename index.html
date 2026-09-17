@@ -64,34 +64,37 @@
       <section id="formTabContent">
         <form id="matForm" onsubmit="handleSaveForm(event)" class="space-y-4">
           
-          <!-- Informasi Lokasi & Sumur (DROPDOWN REQ 1 & 2) -->
+          <!-- Informasi Lokasi & Sumur -->
           <div class="bg-slate-50 p-3 rounded-md border border-slate-200 space-y-3">
             <h3 class="font-semibold text-sm text-sky-800 border-b pb-1"><i class="fa-solid fa-location-dot"></i> Informasi Sumur & Lokasi</h3>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Nama / ID Sumur *</label>
-                <select id="namaSumur" required class="w-full p-2 border rounded-md text-sm bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                <select id="namaSumur" required onchange="autoSelectLokasi()" class="w-full p-2 border rounded-md text-sm bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none">
                   <option value="" disabled selected>-- Pilih Sumur --</option>
-                  <option value="SP-01">SP-01</option>
-                  <option value="SP-02">SP-02</option>
-                  <option value="SP-03">SP-03</option>
-                  <option value="SP-04">SP-04</option>
-                  <option value="SP-05">SP-05</option>
-                  <option value="MB-01">MB-01</option>
-                  <option value="MB-02">MB-02</option>
+                  <option value="SP-PITJATAH">SP-PITJATAH</option>
+                  <option value="SP-PIT Z (WSJ)">SP-PIT Z (WSJ)</option>
+                  <option value="SP-BUG-04">SP-BUG-04</option>
+                  <option value="SP-BUG-03R">SP-BUG-03R</option>
+                  <option value="SP-BUG-06">SP-BUG-06</option>
+                  <option value="SP-BUG-05A">SP-BUG-05A</option>
+                  <option value="SP-BUG-01">SP-BUG-01</option>
+                  <option value="SP-BUG-02">SP-BUG-02</option>
                 </select>
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Lokasi / Area *</label>
                 <select id="lokasi" required class="w-full p-2 border rounded-md text-sm bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none">
                   <option value="" disabled selected>-- Pilih Lokasi / Area --</option>
-                  <option value="Pit Bakungan">Pit Bakungan</option>
-                  <option value="Pit West">Pit West</option>
-                  <option value="Pit East">Pit East</option>
-                  <option value="Disposal Area">Disposal Area</option>
-                  <option value="POS Simpang KTA">POS Simpang KTA</option>
-                  <option value="Stockpile">Stockpile</option>
+                  <option value="0° 38' 46.593&quot; S - 117° 4' 47.274&quot; E">0° 38' 46.593" S - 117° 4' 47.274" E</option>
+                  <option value="0° 41' 40.356&quot; S - 117° 4' 7.545&quot; E">0° 41' 40.356" S - 117° 4' 7.545" E</option>
+                  <option value="0° 40' 22.416&quot; S - 117° 3' 11.797&quot; E">0° 40' 22.416" S - 117° 3' 11.797" E</option>
+                  <option value="0° 40' 18.801&quot; S - 117° 3' 6.815&quot; E">0° 40' 18.801" S - 117° 3' 6.815" E</option>
+                  <option value="0° 41' 13.096&quot; S - 117° 2' 36.111&quot; E">0° 41' 13.096" S - 117° 2' 36.111" E</option>
+                  <option value="0° 41' 8.569&quot; S - 117° 2' 31.711&quot; E">0° 41' 8.569" S - 117° 2' 31.711" E</option>
+                  <option value="0° 39' 38.674&quot; S - 117° 3' 51.496&quot; E">0° 39' 38.674" S - 117° 3' 51.496" E</option>
+                  <option value="0° 39' 43.852&quot; S - 117° 3' 58.420&quot; E">0° 39' 43.852" S - 117° 3' 58.420" E</option>
                 </select>
               </div>
             </div>
@@ -103,11 +106,11 @@
               <div class="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <label class="block text-[10px] text-slate-500 mb-1">Latitude (Dapat Diisi Manual)</label>
-                  <input type="text" id="lat" placeholder="-6.123456" class="w-full p-2 bg-white border rounded-md text-slate-700 focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                  <input type="text" id="lat" placeholder="-0.646276" class="w-full p-2 bg-white border rounded-md text-slate-700 focus:ring-1 focus:ring-sky-500 focus:outline-none">
                 </div>
                 <div>
                   <label class="block text-[10px] text-slate-500 mb-1">Longitude (Dapat Diisi Manual)</label>
-                  <input type="text" id="lng" placeholder="106.123456" class="w-full p-2 bg-white border rounded-md text-slate-700 focus:ring-1 focus:ring-sky-500 focus:outline-none">
+                  <input type="text" id="lng" placeholder="117.079798" class="w-full p-2 bg-white border rounded-md text-slate-700 focus:ring-1 focus:ring-sky-500 focus:outline-none">
                 </div>
               </div>
             </div>
@@ -188,27 +191,24 @@
             </div>
           </div>
 
-          <!-- FITUR UPLOAD FOTO KAMERA / SCREEN RECORD (REQ 3) -->
+          <!-- FITUR UPLOAD FOTO KAMERA / SCREEN RECORD -->
           <div class="bg-slate-50 p-3 rounded-md border border-slate-200 space-y-3">
             <h3 class="font-semibold text-sm text-sky-800 border-b pb-1"><i class="fa-solid fa-camera"></i> Dokumentasi Lapangan</h3>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <!-- Tombol 1: Buka Kamera HP Langsung -->
               <div>
                 <label class="block text-[11px] font-semibold text-slate-600 mb-1"><i class="fa-solid fa-camera text-sky-600"></i> Ambil Foto (Kamera HP)</label>
                 <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100">
               </div>
 
-              <!-- Tombol 2: Screen Record / Video / Pilih File dari Galeri -->
               <div>
                 <label class="block text-[11px] font-semibold text-slate-600 mb-1"><i class="fa-solid fa-video text-amber-600"></i> Galeri / Screen Record / Video</label>
                 <input type="file" id="videoInput" accept="image/*,video/*" multiple onchange="handleFileSelect(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
               </div>
             </div>
 
-            <p class="text-[10px] text-slate-500 italic">* Jika kamera tidak bisa terbuka otomatis, silakan pilih berkas foto atau rekaman layar (Screen Record) melalui tombol kanan.</p>
+            <p class="text-[10px] text-slate-500 italic">* Jika kamera tidak bisa terbuka otomatis, pilih berkas foto atau rekaman layar melalui tombol kanan.</p>
 
-            <!-- Container Preview Files -->
             <div id="previewFoto" class="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2"></div>
           </div>
 
@@ -250,10 +250,29 @@
   </footer>
 
   <script>
-    // URL Backend Apps Script
     const API_URL = "https://script.google.com/macros/s/AKfycbzpD97xyPey0A1rx6YDJy9qZnElqGmguWBC_FTdrdmNYgvhRuQbOJxbRtN9SrqS478t1w/exec";
 
     document.getElementById('currentYear').innerText = new Date().getFullYear();
+
+    // Pemetaan nama sumur ke lokasi koordinat
+    const mapSumurLokasi = {
+      "SP-PITJATAH": "0° 38' 46.593\" S - 117° 4' 47.274\" E",
+      "SP-PIT Z (WSJ)": "0° 41' 40.356\" S - 117° 4' 7.545\" E",
+      "SP-BUG-04": "0° 40' 22.416\" S - 117° 3' 11.797\" E",
+      "SP-BUG-03R": "0° 40' 18.801\" S - 117° 3' 6.815\" E",
+      "SP-BUG-06": "0° 41' 13.096\" S - 117° 2' 36.111\" E",
+      "SP-BUG-05A": "0° 41' 8.569\" S - 117° 2' 31.711\" E",
+      "SP-BUG-01": "0° 39' 38.674\" S - 117° 3' 51.496\" E",
+      "SP-BUG-02": "0° 39' 43.852\" S - 117° 3' 58.420\" E"
+    };
+
+    function autoSelectLokasi() {
+      const sumur = document.getElementById('namaSumur').value;
+      const lokasiSelect = document.getElementById('lokasi');
+      if (mapSumurLokasi[sumur]) {
+        lokasiSelect.value = mapSumurLokasi[sumur];
+      }
+    }
 
     // INDEXEDDB ENGINE
     let db;
@@ -319,7 +338,7 @@
             }
           }
         })
-        .catch(err => console.log("Gagal memuat opsi dropdown dari server, memakai opsi default: " + err));
+        .catch(err => console.log("Gagal memuat opsi dropdown dari server: " + err));
     }
 
     // TAB SWITCHING
@@ -364,7 +383,7 @@
       return { avg: avg.toFixed(2), matTotal: totalMAT.toFixed(2) };
     }
 
-    // MANAGEMENT MEDIA (FOTO/VIDEO/SCREEN RECORD) & KOMPRESI
+    // MANAGEMENT MEDIA (FOTO/VIDEO/SCREEN RECORD)
     let mediaBase64 = [];
 
     function handleFileSelect(e) {
@@ -532,7 +551,8 @@
         draftList.innerHTML = items.map(item => `
           <div class="p-3 bg-slate-50 border rounded-md flex justify-between items-center text-xs">
             <div>
-              <p class="font-bold text-sky-800">${item.namaSumur} - <span class="text-slate-500">${item.lokasi}</span></p>
+              <p class="font-bold text-sky-800">${item.namaSumur}</p>
+              <p class="text-slate-500 text-[11px]">${item.lokasi}</p>
               <p class="text-slate-500">MAT: <b>${item.matTotal} m</b> | Waktu: ${item.tanggalWaktu}</p>
             </div>
             <button onclick="deleteDraft('${item.idTransaksi}')" class="text-red-500 hover:text-red-700">
@@ -611,9 +631,10 @@
           list.innerHTML = res.data.map(r => `
             <div class="p-2 border rounded-md bg-slate-50 space-y-1">
               <div class="flex justify-between font-bold text-slate-700">
-                <span>${r.sumur} (${r.lokasi})</span>
+                <span>${r.sumur}</span>
                 <span class="text-sky-700">MAT: ${r.matTotal} m</span>
               </div>
+              <div class="text-slate-500 text-[11px]">${r.lokasi}</div>
               <div class="flex justify-between text-slate-500 text-[11px]">
                 <span>Petugas: ${r.petugas}</span>
                 <span>${r.tanggal}</span>
