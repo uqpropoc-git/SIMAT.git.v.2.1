@@ -215,8 +215,8 @@
       <section id="draftTabContent" class="hidden space-y-3">
         <div class="flex justify-between items-center border-b pb-2">
           <h3 class="font-semibold text-sm text-slate-700">Daftar Draft Tersimpan di Perangkat</h3>
-          <button onclick="syncDataToServer()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-3 py-1.5 rounded-md font-medium flex items-center gap-1">
-            <i class="fa-solid fa-rotate"></i> Sync Ke Server
+          <button id="btnSync" onclick="syncDataToServer()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs px-3 py-1.5 rounded-md font-medium flex items-center gap-1">
+            <i class="fa-solid fa-rotate"></i> <span id="btnSyncText">Sync Ke Server</span>
           </button>
         </div>
         <div id="draftList" class="space-y-2"></div>
@@ -259,7 +259,6 @@
       { sumur: "SP-BUG-02", lokasi: "0° 39' 43.852\" S - 117° 3' 58.420\" E", tinggiStick: 0.50, kedalaman: 16.50 }
     ];
 
-    // Populasi Opsi Lokasi Awal dari Master Data
     function populateInitialLokasi() {
       const lokasiSelect = document.getElementById('lokasi');
       const uniqueLokasi = [...new Set(masterSumurData.map(item => item.lokasi).filter(Boolean))];
@@ -273,10 +272,8 @@
       });
     }
 
-    // Jalankan pemuatan opsi lokasi awal
     populateInitialLokasi();
 
-    // Fungsi Auto Select Lokasi, Tinggi Stick Pipa, dan Kedalaman Sumur saat Nama Sumur Dipilih
     function autoSelectDetailSumur() {
       const selectedSumur = document.getElementById('namaSumur').value;
       const target = masterSumurData.find(item => item.sumur === selectedSumur);
@@ -284,7 +281,6 @@
       if (target) {
         const lokasiSelect = document.getElementById('lokasi');
 
-        // Tambah opsi lokasi jika belum ada, lalu set value-nya
         if (target.lokasi) {
           let optionExists = Array.from(lokasiSelect.options).some(opt => opt.value === target.lokasi);
           
@@ -298,11 +294,9 @@
           lokasiSelect.value = target.lokasi;
         }
 
-        // Auto fill tinggi stick & kedalaman sumur
         document.getElementById('tinggiStickPipa').value = parseFloat(target.tinggiStick || 0).toFixed(2);
         document.getElementById('kedalamanSumur').value = parseFloat(target.kedalaman || 0).toFixed(2);
         
-        // Recalculate MAT secara otomatis setelah data diisi
         calculateMAT();
       }
     }
@@ -324,14 +318,12 @@
       loadDropdownOptions();
     };
 
-    // LOCAL STORAGE PETUGAS
     const namaPetugasInput = document.getElementById("namaPetugas");
     namaPetugasInput.value = localStorage.getItem("namaPetugas") || "";
     namaPetugasInput.addEventListener("input", () => {
       localStorage.setItem("namaPetugas", namaPetugasInput.value);
     });
 
-    // NETWORK MONITORING
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 
@@ -348,7 +340,6 @@
       }
     }
 
-    // MEMUAT DROPDOWN & MASTER SUMUR DINAMIS DARI SERVER SPREADSHEET (Sheet Master_Sumur)
     function loadDropdownOptions() {
       if (!navigator.onLine) return;
       fetch(`${API_URL}?action=getOptions`)
@@ -388,7 +379,6 @@
               selLokasi.value = curLokasiVal;
             }
 
-            // Jalankan pencocokan otomatis jika sumur sudah terpilih
             if (selSumur.value) {
               autoSelectDetailSumur();
             }
@@ -397,7 +387,6 @@
         .catch(err => console.log("Gagal memuat master sumur dari server: " + err));
     }
 
-    // TAB SWITCHING
     function switchTab(tabName) {
       ['formTab', 'draftTab', 'historyTab'].forEach(t => {
         document.getElementById(t + 'Content').classList.add('hidden');
@@ -411,7 +400,6 @@
       if (tabName === 'historyTab') loadHistoryData();
     }
 
-    // GPS GEOLOCATION
     function getLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
@@ -423,7 +411,6 @@
       }
     }
 
-    // KALKULASI REAL-TIME
     function calculateMAT() {
       const stick = parseFloat(document.getElementById('tinggiStickPipa').value) || 0;
       const u1 = parseFloat(document.getElementById('pengukuran1').value) || 0;
@@ -439,7 +426,6 @@
       return { avg: avg.toFixed(2), matTotal: totalMAT.toFixed(2) };
     }
 
-    // MANAGEMENT MEDIA (FOTO/VIDEO/SCREEN RECORD)
     let mediaBase64 = [];
 
     function handleFileSelect(e) {
@@ -536,7 +522,6 @@
       renderMediaPreview();
     }
 
-    // SIMPAN FORM KE INDEXEDDB
     function handleSaveForm(e) {
       e.preventDefault();
       const calc = calculateMAT();
@@ -578,7 +563,6 @@
       };
     }
 
-    // RENDER DRAFT
     function updateDraftCount() {
       if (!db) return;
       const tx = db.transaction("transaksi", "readonly");
@@ -620,16 +604,20 @@
     }
 
     function deleteDraft(id) {
-      const tx = db.transaction("transaksi", "readwrite");
-      tx.objectStore("transaksi").delete(id);
-      tx.oncomplete = () => {
-        renderDrafts();
-        updateDraftCount();
-      };
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("transaksi", "readwrite");
+        tx.objectStore("transaksi").delete(id);
+        tx.oncomplete = () => {
+          renderDrafts();
+          updateDraftCount();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      });
     }
 
-    // SINKRONISASI KE SERVER
-    function syncDataToServer() {
+    // SINKRONISASI KE SERVER (Cara 1: Sekuensial per Transaksi)
+    async function syncDataToServer() {
       if (!navigator.onLine) {
         alert("Koneksi offline. Sinkronisasi dibatalkan.");
         return;
@@ -637,41 +625,62 @@
 
       const tx = db.transaction("transaksi", "readonly");
       const store = tx.objectStore("transaksi");
-      const req = store.getAll();
+      
+      const items = await new Promise(resolve => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+      });
 
-      req.onsuccess = () => {
-        const items = req.result;
-        if (items.length === 0) {
-          alert("Tidak ada draft untuk disinkronkan.");
-          return;
-        }
+      if (!items || items.length === 0) {
+        alert("Tidak ada draft untuk disinkronkan.");
+        return;
+      }
 
-        fetch(API_URL, {
-          method: "POST",
-          mode: "cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "syncData", data: items })
-        })
-        .then(res => res.json())
-        .then(res => {
+      const btnSync = document.getElementById('btnSync');
+      const btnSyncText = document.getElementById('btnSyncText');
+      btnSync.disabled = true;
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        btnSyncText.innerText = `Proses ${i + 1}/${items.length}...`;
+
+        try {
+          const res = await fetch(API_URL, {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "syncData", data: item })
+          }).then(r => r.json());
+
           if (res.status === 'success') {
-            const delTx = db.transaction("transaksi", "readwrite");
-            const delStore = delTx.objectStore("transaksi");
-            res.syncedIds.forEach(id => delStore.delete(id));
-            delTx.oncomplete = () => {
-              alert(res.message);
-              renderDrafts();
-              updateDraftCount();
-            };
+            await deleteDraft(item.idTransaksi);
+            successCount++;
           } else {
-            alert("Gagal sync: " + res.message);
+            failCount++;
+            console.error(`Gagal sync ID ${item.idTransaksi}:`, res.message);
           }
-        })
-        .catch(err => alert("Error Server: " + err));
-      };
+        } catch (err) {
+          failCount++;
+          console.error(`Error networking ID ${item.idTransaksi}:`, err);
+        }
+      }
+
+      btnSync.disabled = false;
+      btnSyncText.innerText = "Sync Ke Server";
+
+      if (failCount === 0) {
+        alert(`Berhasil mengunggah seluruh data (${successCount} transaksi).`);
+      } else {
+        alert(`Proses selesai. Berhasil: ${successCount}, Gagal: ${failCount}. Transaksi gagal tetap tersimpan di draft.`);
+      }
+
+      renderDrafts();
+      updateDraftCount();
     }
 
-    // LOAD RIWAYAT
     function loadHistoryData() {
       const list = document.getElementById('historyList');
       list.innerHTML = '<p class="text-slate-400">Mengambil data dari server...</p>';
@@ -704,7 +713,6 @@
         });
     }
 
-    // REGISTRASI SERVICE WORKER
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
         .then(() => console.log("Service Worker Registered"))
