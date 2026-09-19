@@ -29,34 +29,53 @@ function doPost(e) {
   }
 }
 
-// Handler Opsi Dropdown (Sumur & Lokasi)
+// Handler Opsi Dropdown & Detail Master Sumur
 function handleGetOptions() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheetMaster = ss.getSheetByName('Master_Sumur');
     
-    // Default fallback jika sheet master belum dibuat
-    let sumurList = ["SP-01", "SP-02", "SP-03", "SP-04", "SP-05", "MB-01", "MB-02"];
-    let lokasiList = ["Pit Bakungan", "Pit West", "Pit East", "Disposal Area", "POS Simpang KTA", "Stockpile"];
+    // Default fallback jika sheet master belum dibuat di Spreadsheet
+    let masterSumurData = [
+      { sumur: "SP-PITJATAH", lokasi: "0° 38' 46.593\" S - 117° 4' 47.274\" E", tinggiStick: 0.50, kedalaman: 25.00 },
+      { sumur: "SP-PIT Z (WSJ)", lokasi: "0° 41' 40.356\" S - 117° 4' 7.545\" E", tinggiStick: 0.60, kedalaman: 30.00 },
+      { sumur: "SP-BUG-04", lokasi: "0° 40' 22.416\" S - 117° 3' 11.797\" E", tinggiStick: 0.45, kedalaman: 20.00 },
+      { sumur: "SP-BUG-03R", lokasi: "0° 40' 18.801\" S - 117° 3' 6.815\" E", tinggiStick: 0.55, kedalaman: 22.50 },
+      { sumur: "SP-BUG-06", lokasi: "0° 41' 13.096\" S - 117° 2' 36.111\" E", tinggiStick: 0.50, kedalaman: 18.00 },
+      { sumur: "SP-BUG-05A", lokasi: "0° 41' 8.569\" S - 117° 2' 31.711\" E", tinggiStick: 0.40, kedalaman: 24.00 },
+      { sumur: "SP-BUG-01", lokasi: "0° 39' 38.674\" S - 117° 3' 51.496\" E", tinggiStick: 0.50, kedalaman: 15.00 },
+      { sumur: "SP-BUG-02", lokasi: "0° 39' 43.852\" S - 117° 3' 58.420\" E", tinggiStick: 0.50, kedalaman: 16.50 }
+    ];
 
     if (sheetMaster) {
       const data = sheetMaster.getDataRange().getValues();
       if (data.length > 1) {
-        sumurList = [];
-        lokasiList = [];
+        masterSumurData = [];
         for (let i = 1; i < data.length; i++) {
-          if (data[i][0]) sumurList.push(data[i][0].toString());
-          if (data[i][1]) lokasiList.push(data[i][1].toString());
+          if (data[i][0]) {
+            masterSumurData.push({
+              sumur: data[i][0].toString().trim(),
+              lokasi: data[i][1] ? data[i][1].toString().trim() : '',
+              tinggiStick: data[i][2] !== '' && !isNaN(parseFloat(data[i][2])) ? parseFloat(data[i][2]) : 0,
+              kedalaman: data[i][3] !== '' && !isNaN(parseFloat(data[i][3])) ? parseFloat(data[i][3]) : 0
+            });
+          }
         }
-        sumurList = [...new Set(sumurList)];
-        lokasiList = [...new Set(lokasiList)];
       }
+    } else {
+      // Jika sheet Master_Sumur belum ada, otomatis buatkan beserta headernya
+      sheetMaster = ss.insertSheet('Master_Sumur');
+      sheetMaster.appendRow(['Nama_Sumur', 'Lokasi', 'Tinggi_Stick_Pipa_m', 'Kedalaman_Sumur_m']);
+      sheetMaster.getRange("A1:D1").setFontWeight("bold").setBackground("#e2e8f0");
+      
+      masterSumurData.forEach(item => {
+        sheetMaster.appendRow([item.sumur, item.lokasi, item.tinggiStick, item.kedalaman]);
+      });
     }
 
     return respondJSON({
       status: 'success',
-      sumur: sumurList,
-      lokasi: lokasiList
+      masterSumur: masterSumurData
     });
   } catch (e) {
     return respondJSON({ status: 'error', message: e.toString() });
