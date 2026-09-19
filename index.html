@@ -87,14 +87,6 @@
                 <label class="block text-xs font-medium text-slate-600 mb-1">Lokasi / Area *</label>
                 <select id="lokasi" required class="w-full p-2 border rounded-md text-sm bg-white focus:ring-1 focus:ring-sky-500 focus:outline-none">
                   <option value="" disabled selected>-- Pilih Lokasi / Area --</option>
-                  <option value="0° 38' 46.593&quot; S - 117° 4' 47.274&quot; E">0° 38' 46.593" S - 117° 4' 47.274" E</option>
-                  <option value="0° 41' 40.356&quot; S - 117° 4' 7.545&quot; E">0° 41' 40.356" S - 117° 4' 7.545" E</option>
-                  <option value="0° 40' 22.416&quot; S - 117° 3' 11.797&quot; E">0° 40' 22.416" S - 117° 3' 11.797" E</option>
-                  <option value="0° 40' 18.801&quot; S - 117° 3' 6.815&quot; E">0° 40' 18.801" S - 117° 3' 6.815" E</option>
-                  <option value="0° 41' 13.096&quot; S - 117° 2' 36.111&quot; E">0° 41' 13.096" S - 117° 2' 36.111" E</option>
-                  <option value="0° 41' 8.569&quot; S - 117° 2' 31.711&quot; E">0° 41' 8.569" S - 117° 2' 31.711" E</option>
-                  <option value="0° 39' 38.674&quot; S - 117° 3' 51.496&quot; E">0° 39' 38.674" S - 117° 3' 51.496" E</option>
-                  <option value="0° 39' 43.852&quot; S - 117° 3' 58.420&quot; E">0° 39' 43.852" S - 117° 3' 58.420" E</option>
                 </select>
               </div>
             </div>
@@ -255,7 +247,7 @@
 
     document.getElementById('currentYear').innerText = new Date().getFullYear();
 
-    // Master Sumur Data (Will be updated dynamically from Google Apps Script / Master_Sumur Sheet)
+    // Master Sumur Data (Inisialisasi awal)
     let masterSumurData = [
       { sumur: "SP-PITJATAH", lokasi: "0° 38' 46.593\" S - 117° 4' 47.274\" E", tinggiStick: 0.50, kedalaman: 25.00 },
       { sumur: "SP-PIT Z (WSJ)", lokasi: "0° 41' 40.356\" S - 117° 4' 7.545\" E", tinggiStick: 0.60, kedalaman: 30.00 },
@@ -267,15 +259,42 @@
       { sumur: "SP-BUG-02", lokasi: "0° 39' 43.852\" S - 117° 3' 58.420\" E", tinggiStick: 0.50, kedalaman: 16.50 }
     ];
 
+    // Populasi Opsi Lokasi Awal dari Master Data
+    function populateInitialLokasi() {
+      const lokasiSelect = document.getElementById('lokasi');
+      const uniqueLokasi = [...new Set(masterSumurData.map(item => item.lokasi).filter(Boolean))];
+      
+      lokasiSelect.innerHTML = '<option value="" disabled selected>-- Pilih Lokasi / Area --</option>';
+      uniqueLokasi.forEach(lok => {
+        const opt = document.createElement('option');
+        opt.value = lok;
+        opt.textContent = lok;
+        lokasiSelect.appendChild(opt);
+      });
+    }
+
+    // Jalankan pemuatan opsi lokasi awal
+    populateInitialLokasi();
+
     // Fungsi Auto Select Lokasi, Tinggi Stick Pipa, dan Kedalaman Sumur saat Nama Sumur Dipilih
     function autoSelectDetailSumur() {
       const selectedSumur = document.getElementById('namaSumur').value;
       const target = masterSumurData.find(item => item.sumur === selectedSumur);
 
       if (target) {
-        // Auto fill lokasi
         const lokasiSelect = document.getElementById('lokasi');
+
+        // Tambah opsi lokasi jika belum ada, lalu set value-nya
         if (target.lokasi) {
+          let optionExists = Array.from(lokasiSelect.options).some(opt => opt.value === target.lokasi);
+          
+          if (!optionExists) {
+            const newOpt = document.createElement('option');
+            newOpt.value = target.lokasi;
+            newOpt.text = target.lokasi;
+            lokasiSelect.add(newOpt);
+          }
+          
           lokasiSelect.value = target.lokasi;
         }
 
@@ -329,7 +348,7 @@
       }
     }
 
-    // MEMUAT DROPDOWN & MASTER SUMUR DINAMIS DARI SERVER SPREADSHEET
+    // MEMUAT DROPDOWN & MASTER SUMUR DINAMIS DARI SERVER SPREADSHEET (Sheet Master_Sumur)
     function loadDropdownOptions() {
       if (!navigator.onLine) return;
       fetch(`${API_URL}?action=getOptions`)
@@ -340,8 +359,15 @@
             
             const selSumur = document.getElementById('namaSumur');
             const curSumurVal = selSumur.value;
-            selSumur.innerHTML = '<option value="" disabled selected>-- Pilih Sumur --</option>' +
-              masterSumurData.map(item => `<option value="${item.sumur}">${item.sumur}</option>`).join('');
+            
+            selSumur.innerHTML = '<option value="" disabled selected>-- Pilih Sumur --</option>';
+            masterSumurData.forEach(item => {
+              const opt = document.createElement('option');
+              opt.value = item.sumur;
+              opt.textContent = item.sumur;
+              selSumur.appendChild(opt);
+            });
+
             if (curSumurVal) {
               selSumur.value = curSumurVal;
             }
@@ -350,13 +376,19 @@
             const curLokasiVal = selLokasi.value;
             const uniqueLokasi = [...new Set(masterSumurData.map(item => item.lokasi).filter(Boolean))];
             
-            selLokasi.innerHTML = '<option value="" disabled selected>-- Pilih Lokasi / Area --</option>' +
-              uniqueLokasi.map(l => `<option value="${l}">${l}</option>`).join('');
+            selLokasi.innerHTML = '<option value="" disabled selected>-- Pilih Lokasi / Area --</option>';
+            uniqueLokasi.forEach(l => {
+              const opt = document.createElement('option');
+              opt.value = l;
+              opt.textContent = l;
+              selLokasi.appendChild(opt);
+            });
+
             if (curLokasiVal) {
               selLokasi.value = curLokasiVal;
             }
 
-            // Jika sumur sudah terpilih sebelum refresh, jalankan auto-select detail
+            // Jalankan pencocokan otomatis jika sumur sudah terpilih
             if (selSumur.value) {
               autoSelectDetailSumur();
             }
