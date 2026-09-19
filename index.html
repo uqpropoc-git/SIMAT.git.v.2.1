@@ -157,11 +157,11 @@
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Tinggi Stick Pipa (m)</label>
-                <input type="number" step="0.01" id="tinggiStickPipa" value="0.00" oninput="calculateMAT()" class="w-full p-2 border rounded-md text-sm">
+                <input type="number" step="0.01" id="tinggiStickPipa" value="0.00" readonly class="w-full p-2 border rounded-md text-sm bg-slate-100 text-slate-600 font-semibold cursor-not-allowed">
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Kedalaman Sumur (m)</label>
-                <input type="number" step="0.01" id="kedalamanSumur" value="0.00" class="w-full p-2 border rounded-md text-sm">
+                <input type="number" step="0.01" id="kedalamanSumur" value="0.00" readonly class="w-full p-2 border rounded-md text-sm bg-slate-100 text-slate-600 font-semibold cursor-not-allowed">
               </div>
             </div>
 
@@ -255,7 +255,7 @@
 
     document.getElementById('currentYear').innerText = new Date().getFullYear();
 
-    // Data Master Sumur Default (Fallback Offline First)
+    // Master Sumur Data (Will be updated dynamically from Google Apps Script / Master_Sumur Sheet)
     let masterSumurData = [
       { sumur: "SP-PITJATAH", lokasi: "0° 38' 46.593\" S - 117° 4' 47.274\" E", tinggiStick: 0.50, kedalaman: 25.00 },
       { sumur: "SP-PIT Z (WSJ)", lokasi: "0° 41' 40.356\" S - 117° 4' 7.545\" E", tinggiStick: 0.60, kedalaman: 30.00 },
@@ -267,21 +267,23 @@
       { sumur: "SP-BUG-02", lokasi: "0° 39' 43.852\" S - 117° 3' 58.420\" E", tinggiStick: 0.50, kedalaman: 16.50 }
     ];
 
-    // Mengisi otomatis Lokasi, Tinggi Stick Pipa, dan Kedalaman Sumur saat Nama Sumur dipilih
+    // Fungsi Auto Select Lokasi, Tinggi Stick Pipa, dan Kedalaman Sumur saat Nama Sumur Dipilih
     function autoSelectDetailSumur() {
       const selectedSumur = document.getElementById('namaSumur').value;
       const target = masterSumurData.find(item => item.sumur === selectedSumur);
 
       if (target) {
+        // Auto fill lokasi
         const lokasiSelect = document.getElementById('lokasi');
         if (target.lokasi) {
           lokasiSelect.value = target.lokasi;
         }
 
+        // Auto fill tinggi stick & kedalaman sumur
         document.getElementById('tinggiStickPipa').value = parseFloat(target.tinggiStick || 0).toFixed(2);
         document.getElementById('kedalamanSumur').value = parseFloat(target.kedalaman || 0).toFixed(2);
         
-        // Recalculate MAT secara otomatis
+        // Recalculate MAT secara otomatis setelah data diisi
         calculateMAT();
       }
     }
@@ -340,7 +342,9 @@
             const curSumurVal = selSumur.value;
             selSumur.innerHTML = '<option value="" disabled selected>-- Pilih Sumur --</option>' +
               masterSumurData.map(item => `<option value="${item.sumur}">${item.sumur}</option>`).join('');
-            if (curSumurVal) selSumur.value = curSumurVal;
+            if (curSumurVal) {
+              selSumur.value = curSumurVal;
+            }
 
             const selLokasi = document.getElementById('lokasi');
             const curLokasiVal = selLokasi.value;
@@ -348,7 +352,14 @@
             
             selLokasi.innerHTML = '<option value="" disabled selected>-- Pilih Lokasi / Area --</option>' +
               uniqueLokasi.map(l => `<option value="${l}">${l}</option>`).join('');
-            if (curLokasiVal) selLokasi.value = curLokasiVal;
+            if (curLokasiVal) {
+              selLokasi.value = curLokasiVal;
+            }
+
+            // Jika sumur sudah terpilih sebelum refresh, jalankan auto-select detail
+            if (selSumur.value) {
+              autoSelectDetailSumur();
+            }
           }
         })
         .catch(err => console.log("Gagal memuat master sumur dari server: " + err));
